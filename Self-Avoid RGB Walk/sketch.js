@@ -1,7 +1,3 @@
-// The Nature of Code
-// Daniel Shiffman
-// http://natureofcode.com
-
 let spacing = 10;
 let cols;
 let rows;
@@ -39,13 +35,23 @@ function setup() {
 
 function draw() {
   walker.step();
-  //end program if its stuck (has visited all adjacent points)
-  if(walker.stuck) {
-    noLoop();
+  //if walker stuck, you can click to reset it
+  if (walker.stuck && mouseIsPressed === true) {
+    clear();
+    background(0);
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        grid[i][j] = false;
+      }
+    }
+    walker.x = cols / 2;
+    walker.y = rows / 2;
+    grid[cols / 2][rows / 2] = true;
+    walker.stuck = false;
   }
 }
 
-//checks to make sure the point is unvisited
+//checks to make sure the point is unvisited and in bounds
 function isValid(i, j) {
   if (i < 0 || i >= cols || j < 0 || j >= rows) {
     return false;
@@ -63,38 +69,48 @@ class Walker {
 
   step() {
     //maps the point on the grid to a corresponding rgb color based on its location. since its 2d, idk what to do w blue so i just had it pick a random value
-    stroke(map(this.x, 0, cols, 0, 255), map(this.y, 0, rows, 0, 255), random(255));
-    strokeWeight(spacing * 0.5);
-    point(this.x * spacing, this.y * spacing);
+    if (!this.stuck) {
+      stroke(
+        map(this.x, 0, cols, 0, 255),
+        map(this.y, 0, rows, 0, 255),
+        random(255)
+      );
+      strokeWeight(spacing * 0.5);
+      point(this.x * spacing, this.y * spacing);
 
-    //looks at all adjacent points, any that are visited are omitted as an option
-    let options = [];
-    for (let option of allOptions) {
-      let newX = this.x + option.dx;
-      let newY = this.y + option.dy;
-      if (isValid(newX, newY)) {
-        options.push(option);
+      //looks at all adjacent points, any that are visited or out of bounds are omitted as an option
+      let options = [];
+      for (let option of allOptions) {
+        let newX = this.x + option.dx;
+        let newY = this.y + option.dy;
+        if (isValid(newX, newY)) {
+          options.push(option);
+        }
       }
-    }
-    //chose a random direction to move in
-    if (options.length > 0) {
-      let step = random(options);
-      
-      //map the lines between the points
-      strokeWeight(1);
-      //stroke(255);
-      beginShape();
-      vertex(this.x * spacing, this.y * spacing);
-      this.x += step.dx;
-      this.y += step.dy;
-      vertex(this.x * spacing, this.y * spacing);
-      endShape();
-      //signal that this point has been visited
-      grid[this.x][this.y] = true;
+      //chose a random direction to move in
+      if (options.length > 0) {
+        let step = random(options);
+
+        //map the lines between the points
+        strokeWeight(1);
+        //stroke(255);
+        beginShape();
+        vertex(this.x * spacing, this.y * spacing);
+        this.x += step.dx;
+        this.y += step.dy;
+        vertex(this.x * spacing, this.y * spacing);
+        endShape();
+        //signal that this point has been visited
+        grid[this.x][this.y] = true;
+      } else {
+        //stops doing stuff if theres nowhere to go
+        console.log(`I'm stuck!`);
+        this.stuck = true;
+      }
     } else {
-      //ends program if theres nowhere to go
-      console.log(`I'm stuck!`);
-      this.stuck = true;
+      fill(255);
+      noStroke();
+      text("I'm stuck! Click to reset", width / 2 - 60, 50);
     }
   }
 }
